@@ -225,7 +225,9 @@ def run_scraper(csv_path, user_data_dir=None, profile_directory=None):
 
 if __name__ == "__main__":
     print('scrapping main method....')
-    csv_path = '/app/input/search.queries.1.csv'  # Updated path for Docker container
+    # csv_path = '/app/input/search.queries.1.csv'  # Updated path for Docker container
+    csv_path = os.getenv('CSV_PATH', '/app/input/default.csv')
+    print(f'csv_path: {csv_path}')
     user_data_dir = "/root/.config/google-chrome"  # Default Chrome user data directory in Docker
     profile_directory = "Profile 13"
     run_scraper(csv_path, user_data_dir=user_data_dir, profile_directory=profile_directory)
