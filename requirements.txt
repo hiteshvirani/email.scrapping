@@ -1,0 +1,5 @@
+pandas
+beautifulsoup4
+lxml
+selenium
+chromedriver-autoinstaller
