@@ -20,7 +20,7 @@ logs_dir="/home/hitesh/A/Data/email.scrapping/logs"
 mkdir -p "$logs_dir"
 
 # Run Docker Compose with each override file
-for i in $(seq 1 15); do
+for i in $(seq 1 5); do
   echo "Starting container with override file: docker-compose.override.$i.yml"
   docker-compose -f docker-compose.yml -f docker-compose.override.$i.yml up -d > "$logs_dir/compose-$i.log" 2>&1
   # Check if the container started successfully
