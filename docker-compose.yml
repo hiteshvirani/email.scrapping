@@ -1,0 +1,12 @@
+services:
+  email-scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scrapping_img
+    volumes:
+      - /home/hitesh/A/Data/email.scrapping/input/search.queries.1.csv:/app/input/search.queries.1.csv
+      - /home/hitesh/A/Data/email.scrapping/output:/app/output
+    environment:
+      - DISPLAY=:99
+    command: python scrapping.py
