@@ -1,0 +1,11 @@
+docker run \
+  --name email-scraper-container \
+  -v /home/hitesh/A/Data/email.scrapping/input/search.queries.1.csv:/app/input/search.queries.1.csv \
+  -v /home/hitesh/A/Data/email.scrapping/output:/app/output \
+  -e DISPLAY=:99 \
+  -e CSV_PATH=/app/input/search.queries.1.csv \
+  scrapping_img \
+  python scrapping.py
+
+
+Cookie acceptance button not found or already accepted.

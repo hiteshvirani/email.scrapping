@@ -9,6 +9,7 @@ services:
       - /home/hitesh/A/Data/email.scrapping/output:/app/output
     environment:
       - DISPLAY=:99
+      - CSV_PATH=/app/input/search.queries.1.csv
     command: python scrapping.py
 
 # services:
