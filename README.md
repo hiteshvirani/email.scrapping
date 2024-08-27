@@ -1,71 +1,97 @@
+# 📧 Email Scraping Tool - The Ultimate Email Hunter!
 
-# Email Scraper with Docker
+## 🌟 Overview
 
-Welcome to the Email Scraper project! This repository provides a robust solution for scraping emails from websites using Python, and it includes Docker support for easy setup and deployment.
+Welcome to the **Email Scraping Tool**, where we turn you into a digital detective! Whether you’re chasing down emails from a single CSV file or unleashing an army of containers to tackle a CSV army, we’ve got your back. This tool breaks the job into two epic modes:
 
-## 📋 Requirements
+1. **Manual Mode**: 🔍 For when you’re in the zone and just need to scrape emails from one CSV.
+2. **Automated Mode**: 🗿 The big leagues. Let’s automate this! Just throw a bunch of CSVs at it and let the magic happen.
 
-- Docker installed on your system
+## 🛠️ Prerequisites
 
-## 🚀 Running a Single Container
+- **Docker**: Because we don’t want to clutter your system. [Get Docker](https://docs.docker.com/get-docker/) and keep your machine clean.
 
-To run the scraper in a single Docker container:
+## 🚀 Getting Started
 
-1. **Start the container**:
-   ```bash
-   docker-compose up -d
-   ```
+### 1. Clone the Repository
 
-2. **Stop the container**:
-   ```bash
-   docker-compose down
-   ```
+Start by cloning the repo to your local machine. We’ll keep it simple:
 
-## ⚙️ Running Multiple Containers
+```bash
+git clone https://github.com/your-username/email-scraping-tool.git
+cd email-scraping-tool
+```
 
-For scenarios where you need to run multiple containers with different configurations:
+### 2. Build the Docker Image
 
-1. **Make the shell scripts executable**:
-   ```bash
-   chmod +x generate-compose-files.sh
-   chmod +x run.sh
-   ```
+Now, let’s build that Docker image. It’s like baking a cake but without the calories:
 
-2. **Generate the necessary Docker Compose files**:
-   ```bash
-   ./generate-compose-files.sh
-   ```
+```bash
+docker build -t scrapping_img .
+```
 
-3. **Run the containers**:
-   ```bash
-   ./run.sh
-   ```
+## 📦 Manual Mode: The Solo Act
 
-> **Note**: You may need to modify the `generate-compose-files.sh` and `run.sh` files according to your requirements. This includes setting the number of containers to run and specifying paths for inputs and outputs.
+**Run a single container to scrape emails from your CSV file. It’s like one-on-one training:**
 
-## 🔧 Configuration
+```bash
+docker run \
+  --name email-scraper-container \
+  -v /path/to/your/input/search.queries.1.csv:/app/input/search.queries.1.csv \
+  -v /path/to/your/output:/app/output \
+  -e DISPLAY=:99 \
+  -e CSV_PATH=/app/input/search.queries.1.csv \
+  scrapping_img \
+  python scrapping.py
+```
 
-- **`generate-compose-files.sh`**: Customize this script to specify the number of containers and their configurations.
-- **`run.sh`**: Adjust this script as needed to handle different container setups.
+**Parameters:**
+- Swap out `/path/to/your/input/search.queries.1.csv` with your actual CSV path.
+- Set `/path/to/your/output` where you want those juicy email results.
+- Change `CSV_PATH` if you’re using a different file. 
 
-## 📂 Files and Directories
+**Emails will be delivered straight to your output folder.**
 
-- **`Dockerfile`**: Defines the Docker image for the email scraper.
-- **`docker-compose.yml`**: Configures the services, networks, and volumes.
-- **`generate-compose-files.sh`**: Shell script to generate Docker Compose files.
-- **`run.sh`**: Shell script to run multiple Docker containers.
-- **`input/`**: Directory for input files.
-- **`output/`**: Directory for output files.
-- **`logs/`**: Directory where logs from all Docker containers will be stored.
+## ⚙️ Automated Mode: The Multitasking Master
 
-## 📜 Logging
+**Ready to go big? Automate the entire process and let the machines do the heavy lifting:**
 
-All logs from Docker containers will be stored in the `logs/` folder. Make sure to check these logs for detailed information on the scraping process.
+1. **Set Permissions and Run the Script:**
+
+```bash
+chmod +x run_scrapper.sh
+./run_scrapper.sh
+```
+
+2. **Prepare Your Arsenal:**
+   - Drop all your query CSV files into the `/input` folder.
+   - Keep it simple: each CSV should have one query to avoid chaos.
+
+**Why Automated Mode Rocks:**
+- 🗿 **Multi-Container Madness**: Multiple containers working in sync. It’s like having a small army.
+- 📂 **Organized Output**: Scraped emails are neatly stored in the `/output` folder.
+- 📜 **Logs Galore**: All container logs are saved in the `logs/` folder. Keep tabs on your scraping adventure!
+- 💪 **Error Handling**: Automated error management. No sweat, just results.
+
+## 📁 Directory Layout
+
+- **`/input`**: Toss your query CSV files here.
+- **`/output`**: Where the magic happens – your scraped emails are stored.
+- **`logs/`**: For all the juicy details – container logs.
 
 ## 🤝 Contributing
 
-Feel free to submit issues or pull requests if you have suggestions for improvements or new features.
+Want to make this tool even cooler? Fork it, add your magic, and send a pull request. We love new ideas!
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This tool is licensed under the MIT License. Check out the [LICENSE](LICENSE) file for all the legal jazz.
+
+## 🙌 Acknowledgments
+
+- **Docker**: For keeping things tidy and organized.
+- **Python**: For making scraping a breeze.
+
+Got questions? Open an issue or shoot me a message. Let’s get scraping!
+
+Happy scraping, you digital detective! 🕵️‍♂️🎉
