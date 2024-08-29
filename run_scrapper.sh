@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the maximum number of concurrent containers
-MAX_CONTAINERS=4
+MAX_CONTAINERS=15
 
 # Paths to the input, output, and log directories
 INPUT_DIR="/home/hitesh/A/Data/email.scrapping/input"
@@ -40,6 +40,19 @@ monitor_container() {
     # Wait for 120 seconds to check the log file
     sleep 120
 
+    if grep -q "pandas.errors.EmptyDataError: No columns to parse from file" "$log_file"; then
+        echo "EmptyDataError found for container $container_name. Deleting CSV: $csv_file"
+
+        # Stop and remove the existing container
+        docker stop "$container_name"
+        docker rm "$container_name"
+
+        # Delete the CSV file
+        rm -f "$INPUT_DIR/$csv_file"
+    else
+        echo "No EmptyDataError found for container $container_name."
+    fi
+
     if ! grep -q "Cookie acceptance button not found or already accepted." "$log_file"; then
         echo "Log message not found for container $container_name. Restarting container..."
         
@@ -66,12 +79,12 @@ while true; do
     fi
 
     # Start new containers if the number of running containers is below the limit
-    while [ $(docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; do
+    while [ $(sudo docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; do
         # Get the first CSV file from the list
         csv_file=$(basename "${csv_files[0]}")
 
         # Calculate a random delay between 10 and 200 seconds
-        delay=$((RANDOM % 191 + 10))
+        delay=$((RANDOM % 15 + 10))
 
         echo "Waiting for $delay seconds before starting the next container..."
 
