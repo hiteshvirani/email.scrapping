@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set the maximum number of concurrent containers
-MAX_CONTAINERS=15
+MAX_CONTAINERS=2
 
 # Paths to the input, output, and log directories
 INPUT_DIR="/home/hitesh/A/Data/email.scrapping/input"
