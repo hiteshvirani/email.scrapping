@@ -72,7 +72,8 @@ class EmailScraper:
                 break
 
     def _save_emails_to_csv(self):
-        output_dir = "/app/output"
+        # output_dir = "/app/output"
+        output_dir = "/home/hitesh/A/Data/email.scrapping/output"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -113,11 +114,12 @@ def run_scraper(csv_path, user_data_dir=None, profile_directory=None):
         query = row[1]
         query_name = query.replace('"', '').replace(' ', '_')
         if len(row) < 3 or pd.isna(row[2]):
-            EmailScraper(query, query_name, csv_path, index, user_data_dir=user_data_dir, profile_directory=profile_directory)
+            EmailScraper(query, query_name, csv_path, index, user_data_dir=None, profile_directory=profile_directory)
 
 if __name__ == "__main__":
     print('Scraping main method...')
-    csv_path = os.getenv('CSV_PATH', '/app/input/default.csv')  # Use for multiple Docker container running
+    # csv_path = os.getenv('CSV_PATH', '/app/input/default.csv')  # Use for multiple Docker container running
+    csv_path = '/home/hitesh/A/Data/email.scrapping/input/search.queries.1.csv'
     print(f'csv_path: {csv_path}')
     user_data_dir = "/root/.config/google-chrome"  # Default Chrome user data directory in Docker
     profile_directory = "Profile 13"
