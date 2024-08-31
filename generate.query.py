@@ -7,7 +7,7 @@ cities = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelp
 
 # Output CSV file prefix
 csv_prefix = 'input/search.queries'
-max_lines_per_file = 100000
+max_lines_per_file = 1
 
 # Ensure the CSV files exist and load existing queries if any
 existing_queries = set()

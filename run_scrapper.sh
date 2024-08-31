@@ -44,43 +44,50 @@ monitor_container() {
     local log_file="$2"
     local csv_file="$3"
     
-    # Wait for 120 seconds to check the log file
-    sleep 120
+    # Monitor the log file continuously
+    while true; do
+        sleep 30  # Check every 10 seconds
 
-    if grep -q "pandas.errors.EmptyDataError: No columns to parse from file" "$log_file"; then
-        echo "EmptyDataError found for container $container_name. Deleting CSV: $csv_file"
+        if grep -q "pandas.errors.EmptyDataError: No columns to parse from file" "$log_file"; then
+            echo "EmptyDataError found for container $container_name. Deleting CSV: $csv_file"
 
-        # Stop and remove the existing container
-        docker stop "$container_name"
-        docker rm "$container_name"
+            # Stop and remove the existing container
+            docker stop "$container_name"
+            docker rm "$container_name"
 
-        # Delete the CSV file
-        rm -f "$INPUT_DIR/$csv_file"
-    elif grep -q "No more columns to scrape." "$log_file"; then
-        echo "\"No more columns to scrape.\" found for container $container_name. Deleting CSV: $csv_file"
+            # Delete the CSV file
+            rm -f "$INPUT_DIR/$csv_file"
+            break  # Exit the loop after handling the error
+        elif grep -q "No more columns to scrape." "$log_file"; then
+            echo "\"No more columns to scrape.\" found for container $container_name. Deleting CSV: $csv_file"
 
-        # Stop and remove the existing container
-        docker stop "$container_name"
-        docker rm "$container_name"
+            # Stop and remove the existing container
+            docker stop "$container_name"
+            docker rm "$container_name"
 
-        # Delete the CSV file
-        rm -f "$INPUT_DIR/$csv_file"
-    else
-        echo "No issues found in the log for container $container_name."
-    fi
+            # Delete the CSV file
+            rm -f "$INPUT_DIR/$csv_file"
+            break  # Exit the loop after handling the error
+        elif ! grep -q "Cookie acceptance button not found or already accepted." "$log_file"; then
+            echo "Log message not found for container $container_name. Restarting container..."
 
-    if ! grep -q "Cookie acceptance button not found or already accepted." "$log_file"; then
-        echo "Log message not found for container $container_name. Restarting container..."
-        
-        # Stop and remove the existing container
-        docker stop "$container_name"
-        docker rm "$container_name"
+            # Stop and remove the existing container
+            docker stop "$container_name"
+            docker rm "$container_name"
 
-        # Re-run the container
-        run_container "$csv_file"
-    else
-        echo "Log message found for container $container_name."
-    fi
+            # Re-run the container
+            run_container "$csv_file"
+            # Re-monitor the new container
+            monitor_container "$container_name" "$log_file" "$csv_file" &
+            # break  # Exit the loop after handling the restart
+        fi
+
+        # Check if the container is still running
+        if [ -z "$(docker ps -q -f name="$container_name")" ]; then
+            echo "Container $container_name has stopped."
+            break  # Exit the loop if the container has stopped
+        fi
+    done
 }
 
 # Main loop to process all CSVs
@@ -95,12 +102,12 @@ while true; do
     fi
 
     # Start new containers if the number of running containers is below the limit
-    while [ $(sudo docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; then
+    while [ $(docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; do
         # Get the first CSV file from the list
         csv_file=$(basename "${csv_files[0]}")
 
         # Calculate a random delay between 10 and 200 seconds
-        delay=$((RANDOM % 15 + 10))
+        delay=$((RANDOM % 190 + 10))
 
         echo "Waiting for $delay seconds before starting the next container..."
 

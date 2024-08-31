@@ -17,6 +17,7 @@ class EmailScraper:
         self.emails = []
         self.email_regex = r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'
         self.page_number = 1
+        self.found_emails = False  # Track if any emails are found
 
         chromedriver_autoinstaller.install()
         options = webdriver.ChromeOptions()
@@ -45,17 +46,19 @@ class EmailScraper:
             except Exception:
                 print("Cookie acceptance button not found or already accepted.")
 
-            time.sleep(random.randrange(40, 80))
+            time.sleep(random.randrange(25, 80))
             self._find_emails()
-            self._update_csv_status()
-        finally:
             self._save_emails_to_csv()
+        finally:
+            self._update_csv_status()  # Update CSV status after scraping
             self.driver.quit()
 
     def _find_emails(self):
         while True:
             soup = BeautifulSoup(self.driver.page_source, features="lxml")
             emails_on_page = re.findall(self.email_regex, soup.text)
+            if emails_on_page:
+                self.found_emails = True  # Set flag to True if any emails are found
             self.emails.extend(emails_on_page)
             print(f"Page {self.page_number}: Found {len(emails_on_page)} emails.")
 
@@ -63,7 +66,7 @@ class EmailScraper:
                 next_button = self.driver.find_element(By.CSS_SELECTOR, '#pnnext span')
                 next_button.click()
                 self.page_number += 1
-                time.sleep(random.randrange(40, 80))
+                time.sleep(random.randrange(25, 80))
             except:
                 print("No more pages to scrape.")
                 break
@@ -86,16 +89,18 @@ class EmailScraper:
             print(f"No emails found for query: {self.query_name}. CSV file still generated.")
 
     def _update_csv_status(self):
-        # Load the CSV file into a DataFrame
-        df = pd.read_csv(self.csv_path, header=None)
-        # Drop the row at the specified index
-        df = df.drop(self.row_index)
-        # Reset the index to keep it consistent
-        df = df.reset_index(drop=True)
-        # Save the updated DataFrame back to the CSV file
-        df.to_csv(self.csv_path, header=None, index=False)
-        print(f"Removed row {self.row_index} from CSV.")
-
+        if self.found_emails:
+            # Load the CSV file into a DataFrame
+            df = pd.read_csv(self.csv_path, header=None)
+            # Drop the row at the specified index
+            df = df.drop(self.row_index)
+            # Reset the index to keep it consistent
+            df = df.reset_index(drop=True)
+            # Save the updated DataFrame back to the CSV file
+            df.to_csv(self.csv_path, header=None, index=False)
+            print(f"Removed row {self.row_index} from CSV because emails were found.")
+        else:
+            print(f"No emails found for query: {self.query_name}. Row {self.row_index} not removed.")
 
 def run_scraper(csv_path, user_data_dir=None, profile_directory=None):
     df = pd.read_csv(csv_path, header=None)
