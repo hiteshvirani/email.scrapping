@@ -20,12 +20,6 @@ run_container() {
     local container_name="email-scraper-container-$(basename "$csv_file" .csv)"
     local log_file="$LOG_DIR/$(basename "$csv_file" .csv).log"
 
-    # Delete the old container if it exists
-    if [ "$(docker ps -a -q -f name="$container_name")" ]; then
-        echo "Deleting old container: $container_name"
-        docker rm -f "$container_name"
-    fi
-
     echo "Starting container: $container_name for CSV: $csv_file"
 
     docker run \
@@ -38,11 +32,10 @@ run_container() {
       python scrapping.py > "$log_file" 2>&1 &
 }
 
-# Function to monitor and handle container logs
+# Function to monitor and restart container if necessary
 monitor_container() {
     local container_name="$1"
     local log_file="$2"
-    local csv_file="$3"
     
     # Wait for 120 seconds to check the log file
     sleep 120
@@ -56,17 +49,8 @@ monitor_container() {
 
         # Delete the CSV file
         rm -f "$INPUT_DIR/$csv_file"
-    elif grep -q "No more columns to scrape." "$log_file"; then
-        echo "\"No more columns to scrape.\" found for container $container_name. Deleting CSV: $csv_file"
-
-        # Stop and remove the existing container
-        docker stop "$container_name"
-        docker rm "$container_name"
-
-        # Delete the CSV file
-        rm -f "$INPUT_DIR/$csv_file"
     else
-        echo "No issues found in the log for container $container_name."
+        echo "No EmptyDataError found for container $container_name."
     fi
 
     if ! grep -q "Cookie acceptance button not found or already accepted." "$log_file"; then
@@ -95,7 +79,7 @@ while true; do
     fi
 
     # Start new containers if the number of running containers is below the limit
-    while [ $(sudo docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; then
+    while [ $(sudo docker ps -q | wc -l) -lt "$MAX_CONTAINERS" ] && [ ${#csv_files[@]} -gt 0 ]; do
         # Get the first CSV file from the list
         csv_file=$(basename "${csv_files[0]}")
 
@@ -115,7 +99,7 @@ while true; do
         run_container "$csv_file"
 
         # Monitor the container's log file
-        monitor_container "$container_name" "$log_file" "$csv_file" &
+        monitor_container "$container_name" "$log_file" &
 
         # Remove the CSV file from the list
         csv_files=("${csv_files[@]:1}")

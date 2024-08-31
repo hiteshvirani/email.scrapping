@@ -8,7 +8,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import chromedriver_autoinstaller
 
-
 class EmailScraper:
     def __init__(self, query, query_name, csv_path, row_index, DEBUG=True, user_data_dir=None, profile_directory=None):
         self.query = query
@@ -64,8 +63,6 @@ class EmailScraper:
                 next_button = self.driver.find_element(By.CSS_SELECTOR, '#pnnext span')
                 next_button.click()
                 self.page_number += 1
-                # if(self.page_number > 3):
-                #    break
                 time.sleep(random.randrange(40, 80))
             except:
                 print("No more pages to scrape.")
@@ -77,7 +74,8 @@ class EmailScraper:
             os.makedirs(output_dir)
 
         query_name = re.sub(r'[\W_]+', '-', self.query_name.lower())
-        file_name = f"{output_dir}/{query_name}.csv"
+        random_suffix = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=3))
+        file_name = f"{output_dir}/{query_name}_{random_suffix}.csv"
 
         if self.emails:
             df = pd.DataFrame(self.emails, columns=['Emails'])
