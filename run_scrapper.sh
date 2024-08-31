@@ -79,7 +79,7 @@ monitor_container() {
             run_container "$csv_file"
             # Re-monitor the new container
             monitor_container "$container_name" "$log_file" "$csv_file" &
-            # break  # Exit the loop after handling the restart
+            break  # Exit the loop after handling the restart
         fi
 
         # Check if the container is still running
