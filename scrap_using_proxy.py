@@ -12,7 +12,7 @@ from selenium.webdriver.chrome.options import Options
 
 
 class EmailScraper:
-    def __init__(self, query, query_name, csv_path, row_index, DEBUG=True, user_data_dir=None, profile_directory=None):
+    def __init__(self, query, query_name, csv_path, row_index, DEBUG=False, user_data_dir=None, profile_directory=None):
         self.query = query
         self.query_name = query_name
         self.csv_path = csv_path
@@ -57,14 +57,17 @@ class EmailScraper:
         return proxies
 
     def _create_driver_with_proxy(self):
-        if not self.proxies:
-            print("Proxies used up, fetching new ones.")
-            self.proxies = self._filter_proxies()
-
-        proxy = self.proxies.pop()
-        self.options.add_argument(f'--proxy-server={proxy}')
-        self.driver = webdriver.Chrome(options=self.options)
-        print(f"Using proxy: {proxy}")
+        while self.proxies:
+            proxy = self.proxies.pop()
+            self.options.add_argument(f'--proxy-server={proxy}')
+            try:
+                self.driver = webdriver.Chrome(options=self.options)
+                print(f"Using proxy: {proxy}")
+                return
+            except Exception as e:
+                print(f"Failed to connect using proxy {proxy}: {e}")
+        print("All proxies exhausted. No connection could be established.")
+        raise Exception("Failed to establish a connection with any proxy.")
 
     def _scrape(self):
         try:
@@ -79,7 +82,8 @@ class EmailScraper:
 
                     time.sleep(random.uniform(5, 15))  # Reduce delay between requests
                     self._find_emails()
-                    self._update_csv_status()
+                    if self.emails:
+                        self._update_csv_status()
                     break
                 except Exception as e:
                     print(f"Error: {e}. Switching proxy...")
@@ -107,7 +111,7 @@ class EmailScraper:
                 break
 
     def _save_emails_to_csv(self):
-        output_dir = "/home/hitesh/A/Data/email.scrapping//output"
+        output_dir = "/home/hitesh/A/Data/email.scrapping/output"
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -133,11 +137,15 @@ class EmailScraper:
 def run_scraper(csv_path, user_data_dir=None, profile_directory=None):
     df = pd.read_csv(csv_path, header=None)
 
+    if df.empty:
+        print("No more columns to scrape.")
+        return
+
     for index, row in df.iterrows():
         query = row[1]
         query_name = query.replace('"', '').replace(' ', '_')
         if len(row) < 3 or pd.isna(row[2]):
-            EmailScraper(query, query_name, csv_path, index, user_data_dir=None, profile_directory=profile_directory)
+            EmailScraper(query, query_name, csv_path, index, user_data_dir=user_data_dir, profile_directory=profile_directory)
 
 
 if __name__ == "__main__":
