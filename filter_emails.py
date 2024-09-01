@@ -1,5 +1,6 @@
 import os
 import csv
+import re
 
 def extract_emails(folder_path, output_csv_path, check_duplicates=True):
     # Ensure continuous serial numbers and unique emails if the output file already exists and flag is true
