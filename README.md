@@ -1,97 +1,113 @@
-# 📧 Email Scraping Tool - The Ultimate Email Hunter!
+# 📧 Email Scraping System - Playwright Stealth Edition
 
-## 🌟 Overview
+A high-performance, stealthy email scraper designed to bypass bot detection and CAPTCHAs using **Playwright**. It simulates human behavior, rotates proxies, and extracts emails efficiently.
 
-Welcome to the **Email Scraping Tool**, where we turn you into a digital detective! Whether you’re chasing down emails from a single CSV file or unleashing an army of containers to tackle a CSV army, we’ve got your back. This tool breaks the job into two epic modes:
+## 🚀 Key Features
 
-1. **Manual Mode**: 🔍 For when you’re in the zone and just need to scrape emails from one CSV.
-2. **Automated Mode**: 🗿 The big leagues. Let’s automate this! Just throw a bunch of CSVs at it and let the magic happen.
+*   **Anti-Detection**: Built on `playwright-stealth` to evade generic bot checks.
+*   **Human Simulation**: Realistic mouse movements, typing speeds, and scrolling patterns.
+*   **Proxy Support**: Built-in proxy rotation with health checks (supports HTTP/HTTPS).
+*   **Scalable**: Docker-ready for easy deployment and scaling.
+*   **Centralized Config**: Simple `.env` configuration.
 
-## 🛠️ Prerequisites
+---
 
-- **Docker**: Because we don’t want to clutter your system. [Get Docker](https://docs.docker.com/get-docker/) and keep your machine clean.
+## 🛠️ Setup & Installation
 
-## 🚀 Getting Started
+### Option 1: Docker (Recommended)
 
-### 1. Clone the Repository
+1.  **Build the Image**:
+    ```bash
+    ./run_docker.sh build
+    ```
 
-Start by cloning the repo to your local machine. We’ll keep it simple:
+2.  **Configure Environment**:
+    Copy `.env.example` to `.env` and adjust settings:
+    ```bash
+    cp .env.example .env
+    ```
+    *   Set `USE_PROXY=true` if using proxies.
+    *   Set `HEADLESS=true` for background execution.
 
-```bash
-git clone https://github.com/your-username/email-scraping-tool.git
-cd email-scraping-tool
-```
+### Option 2: Local Python
 
-### 2. Build the Docker Image
+1.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    playwright install chromium
+    ```
 
-Now, let’s build that Docker image. It’s like baking a cake but without the calories:
+---
 
-```bash
-docker build -t scrapping_img .
-```
+## 🏃 Usage
 
-## 📦 Manual Mode: The Solo Act
-
-**Run a single container to scrape emails from your CSV file. It’s like one-on-one training:**
-
-```bash
-docker run \
-  --name email-scraper-container \
-  -v /path/to/your/input/search.queries.1.csv:/app/input/search.queries.1.csv \
-  -v /path/to/your/output:/app/output \
-  -e DISPLAY=:99 \
-  -e CSV_PATH=/app/input/search.queries.1.csv \
-  scrapping_img \
-  python scrapping.py
-```
-
-**Parameters:**
-- Swap out `/path/to/your/input/search.queries.1.csv` with your actual CSV path.
-- Set `/path/to/your/output` where you want those juicy email results.
-- Change `CSV_PATH` if you’re using a different file. 
-
-**Emails will be delivered straight to your output folder.**
-
-## ⚙️ Automated Mode: The Multitasking Master
-
-**Ready to go big? Automate the entire process and let the machines do the heavy lifting:**
-
-1. **Set Permissions and Run the Script:**
+### 1. Generate Search Queries
+The scraper reads queries from CSV files in the `input/` folder. You can use the included script to generate them:
 
 ```bash
-chmod +x run_scrapper.sh
-./run_scrapper.sh
+python generate.query.py
+```
+*This creates `input/search.queries.x.csv` files with queries like `site:linkedin.com "New York" "@gmail.com"`.*
+
+### 2. Run the Scraper
+
+**Using Docker:**
+```bash
+./run_docker.sh run
 ```
 
-2. **Prepare Your Arsenal:**
-   - Drop all your query CSV files into the `/input` folder.
-   - Keep it simple: each CSV should have one query to avoid chaos.
+**Using Local Python:**
+```bash
+python playwright_scraper.py
+```
 
-**Why Automated Mode Rocks:**
-- 🗿 **Multi-Container Madness**: Multiple containers working in sync. It’s like having a small army.
-- 📂 **Organized Output**: Scraped emails are neatly stored in the `/output` folder.
-- 📜 **Logs Galore**: All container logs are saved in the `logs/` folder. Keep tabs on your scraping adventure!
-- 💪 **Error Handling**: Automated error management. No sweat, just results.
+### 3. Scaling (Multiple Containers)
+To run multiple scrapers in parallel processing different CSV files, use Docker Compose.
 
-## 📁 Directory Layout
+1.  Edit `docker-compose.yml` to uncomment the scaling section or run:
+    ```bash
+    docker-compose up -d --scale email-scraper=3
+    ```
+    *Note: Ensure your `input/` directory has enough query files for multiple instances if you want them to process unique data, or configure different `CSV_PATH` env vars for each service in `docker-compose.yml`.*
 
-- **`/input`**: Toss your query CSV files here.
-- **`/output`**: Where the magic happens – your scraped emails are stored.
-- **`logs/`**: For all the juicy details – container logs.
+### 4. Post-Processing
+After scraping, consolidated emails can be found in the individual CSVs in `output/`. To merge them into a single file:
 
-## 🤝 Contributing
+```bash
+python filter_emails.py
+```
+*   Reads from `output/`
+*   Saves to `emails/extracted_emails.csv`
+*   Removes duplicates and invalid emails
 
-Want to make this tool even cooler? Fork it, add your magic, and send a pull request. We love new ideas!
+---
 
-## 📜 License
+## ⚙️ Configuration
 
-This tool is licensed under the MIT License. Check out the [LICENSE](LICENSE) file for all the legal jazz.
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `HEADLESS` | `true` | Run browser in background |
+| `ENABLE_STEALTH` | `true` | Use anti-detection techniques |
+| `USE_PROXY` | `false` | Enable proxy rotation |
+| `CSV_PATH` | `input/search.queries.1.csv` | Path to input queries |
+| `OUTPUT_DIR` | `output` | Directory for scraped results |
+| `MAX_PAGES_PER_QUERY`| `10` | Max Google pages to scrape per query |
 
-## 🙌 Acknowledgments
+### Proxy Configuration
+Create a `proxies.txt` file (one per line):
+```text
+http://user:pass@1.2.3.4:8080
+http://5.6.7.8:3128
+```
+Then set `PROXY_LIST_FILE=/app/proxies.txt` in `.env`.
 
-- **Docker**: For keeping things tidy and organized.
-- **Python**: For making scraping a breeze.
+---
 
-Got questions? Open an issue or shoot me a message. Let’s get scraping!
+## 🛡️ Anti-Detection Strategy
 
-Happy scraping, you digital detective! 🕵️‍♂️🎉
+This scraper uses a multi-layered approach:
+1.  **Browser Fingerprinting**: Modifies `navigator` properties (`webdriver`, `plugins`, `languages`) to look like a real user.
+2.  **Behavioral Analysis**: Randomizes delays between actions and mimics human mouse curves.
+3.  **Network**: Rotates User-Agents and Proxies to prevent IP bans.
+
+**Note**: If you encounter CAPTCHAs, increase `MIN_PAGE_DELAY` in `.env` or use high-quality residential proxies.

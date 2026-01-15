@@ -1,57 +1,104 @@
+# ============================================
+# Playwright Stealth Email Scraper
+# Docker Compose Configuration
+# ============================================
+
 services:
   email-scraper:
     build:
       context: .
       dockerfile: Dockerfile
-    image: scrapping_img
+    image: playwright-email-scraper:latest
+    container_name: email-scraper
+
+    # Mount volumes for input/output
     volumes:
-      - /home/hitesh/A/Data/email.scrapping/input/search.queries.1.csv:/app/input/search.queries.1.csv
-      - /home/hitesh/A/Data/email.scrapping/output:/app/output
+      - ./input:/app/input:ro # Read-only input
+      - ./output:/app/output # Output directory
+      - ./proxies.txt:/app/proxies.txt:ro # Optional proxy list
+
+    # Environment configuration
     environment:
-      - DISPLAY=:99
+      # Scraper settings
+      - HEADLESS=true
+      - ENABLE_STEALTH=true
+      - USE_PROXY=false
+
+      # Input/Output paths
       - CSV_PATH=/app/input/search.queries.1.csv
-    command: python scrapping.py
+      - OUTPUT_DIR=/app/output
 
-# services:
-#   email-scraper:
-#     image: scrapping_img
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     volumes:
-#       - type: bind
-#         source: /home/hitesh/A/Data/email.scrapping/output
-#         target: /app/output
+      # Timing settings (seconds)
+      - MIN_PAGE_DELAY=3.0
+      - MAX_PAGE_DELAY=12.0
+
+      # Search settings
+      - MAX_PAGES_PER_QUERY=10
+
+      # Proxy settings (if USE_PROXY=true)
+      - PROXY_LIST_FILE=/app/proxies.txt
+      # - PROXY_SERVER=http://proxy.example.com:8080
+      # - PROXY_USERNAME=your_username
+      # - PROXY_PASSWORD=your_password
+
+      # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Restart policy
+    restart: on-failure:3
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================
+# Multiple Container Configuration (Scaling)
+# Uncomment to run multiple scrapers
+# ============================================
+
+#   email-scraper-1:
+#     extends:
+#       service: email-scraper
+#     container_name: email-scraper-1
 #     environment:
-#       - DISPLAY=:99
-#     command: python scrapping.py
-#     deploy:
-#       replicas: 5
-#       resources:
-#         limits:
-#           cpus: '0.5'
-#           memory: 512M
-
-
-# For running multiple docker container
-
-# services:
-#   email-scraper:
-#     image: scrapping_img
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     volumes:
-#       - type: bind
-#         source: /home/hitesh/A/Data/email.scrapping/output
-#         target: /app/output
+#       - CSV_PATH=/app/input/search.queries.1.csv
+#
+#   email-scraper-2:
+#     extends:
+#       service: email-scraper
+#     container_name: email-scraper-2
 #     environment:
-#       - DISPLAY=:99
-#     command: python scrapping.py
-#     deploy:
-#       replicas: 5
-      # resources:
-      #   limits:
-      #     cpus: '0.5'
-      #     memory: 512M
+#       - CSV_PATH=/app/input/search.queries.2.csv
+#
+#   email-scraper-3:
+#     extends:
+#       service: email-scraper
+#     container_name: email-scraper-3
+#     environment:
+#       - CSV_PATH=/app/input/search.queries.3.csv
 
+# ============================================
+# With Proxy Rotation (Example)
+# ============================================
+
+#   email-scraper-with-proxy:
+#     extends:
+#       service: email-scraper
+#     container_name: email-scraper-proxy
+#     environment:
+#       - USE_PROXY=true
+#       - PROXY_LIST_FILE=/app/proxies.txt
+#     volumes:
+#       - ./input:/app/input:ro
+#       - ./output:/app/output
+#       - ./proxies.txt:/app/proxies.txt:ro

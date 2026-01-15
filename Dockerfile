@@ -1,65 +1,57 @@
-# Use the official Python image as a base image
-FROM python:3.9-slim
+# ============================================
+# Playwright Stealth Email Scraper
+# Docker Image using Official Playwright Base
+# ============================================
 
-# Install necessary system dependencies
-RUN apt-get update && \
-    apt-get install -y \
-    wget \
-    gnupg \
-    curl \
-    unzip \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    fonts-liberation \
-    libappindicator3-1 \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
-    libasound2 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libxi6 \
-    libxtst6 \
-    libcups2 \
-    libdrm2 \
-    libgbm1 \
-    libvulkan1 \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
+# Use official Playwright image which includes Python and all browser dependencies
+FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
 
-# Install Google Chrome
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb
-
-# Install ChromeDriver
-RUN CHROME_DRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
-    wget https://chromedriver.storage.googleapis.com/$CHROME_DRIVER_VERSION/chromedriver_linux64.zip && \
-    unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/local/bin/chromedriver && \
-    chmod +x /usr/local/bin/chromedriver && \
-    rm chromedriver_linux64.zip
-
-# Set environment variables for Chrome
-ENV DISPLAY=:99
+# Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Set working directory
 WORKDIR /app
 
-# Copy the requirements file
-COPY requirements.txt requirements.txt
+# Copy requirements first for better caching
+COPY requirements.txt .
 
-RUN pip install --upgrade pip
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
-# Copy the script into the container
-COPY scrapping.py scrapping.py
+# Install Playwright browsers (Chromium only for smaller image if possible, 
+# but the base image might have them or we ensure they are present)
+RUN playwright install chromium
 
-# Run the script
-CMD ["python", "scrapping.py"]
+# Copy application code
+COPY config.py .
+COPY human_behavior.py .
+COPY proxy_manager.py .
+COPY stealth_utils.py .
+COPY playwright_scraper.py .
+
+# Optional: Copy legacy scripts if needed (keeping filter_emails as it might be useful)
+COPY filter_emails.py .
+
+# Create directories for input/output
+RUN mkdir -p /app/input /app/output
+
+# Default environment variables
+ENV HEADLESS=true
+ENV ENABLE_STEALTH=true
+ENV USE_PROXY=false
+ENV CSV_PATH=/app/input/search.queries.1.csv
+ENV OUTPUT_DIR=/app/output
+ENV MIN_PAGE_DELAY=3.0
+ENV MAX_PAGE_DELAY=12.0
+ENV MAX_PAGES_PER_QUERY=10
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "from playwright.sync_api import sync_playwright; print('OK')" || exit 1
+
+# Run the scraper
+CMD ["python", "playwright_scraper.py"]
